@@ -9,6 +9,7 @@ export default function Base() {
     <>
       <Header />
       <Link to="./home"><p>Home</p></Link>
+      <Link to="./profile"><p>Profile</p></Link>
       <h1>Base</h1>
       
      
