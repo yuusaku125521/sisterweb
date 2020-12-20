@@ -17,7 +17,7 @@ const Profile = () => {
                 〇主にペンや水彩またはPCなどで、食べ物や似顔絵を描いています。<br />
                 （特にケーキやツヤのある食べ物、茶色い食べ物など描くのが得意です）<br />
                  美味しいが伝わるイラストまたは心が温まる、癒されるイラストになるよう心掛けて制作しております。</p></div>
-                                < Mainimg><img src={poto} ></img></Mainimg>
+                                < Mainimg><img src={poto} alt={"main"}></img></Mainimg>
                        
                         </ProfileBody>
                        < Footer />

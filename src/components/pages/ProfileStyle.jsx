@@ -1,5 +1,4 @@
 import styled from "styled-components";
-import Profile from "./Profile";
 
 export const ProfileBody = styled.div`
 withe:100%;
