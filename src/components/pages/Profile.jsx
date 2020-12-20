@@ -1,6 +1,7 @@
 import Header from "../templates/Header/Header"
 import { ProfileTitle, ProfileBody, Mainimg } from "./ProfileStyle"
 import poto from "../../components/pages/img/main.jpg"
+import Footer from "../templates/Footer/Footer"
 
 const Profile = () => {
         return (
@@ -17,8 +18,9 @@ const Profile = () => {
                 （特にケーキやツヤのある食べ物、茶色い食べ物など描くのが得意です）<br />
                  美味しいが伝わるイラストまたは心が温まる、癒されるイラストになるよう心掛けて制作しております。</p></div>
                                 < Mainimg><img src={poto} ></img></Mainimg>
-
+                       
                         </ProfileBody>
+                       < Footer />
                 </>
 
         )

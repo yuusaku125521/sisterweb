@@ -2,6 +2,7 @@ import React from "react";
 import Header from "../templates/Header/Header";
 import Slider from "../templates/Slider/Slider"
 // import Insta from "../templates/instagram/instagram"
+import Footer from "../templates/Footer/Footer"
 
 const Home = () => {
 
@@ -12,7 +13,6 @@ const Home = () => {
   maxWidth: "500px",
    }
   const bodyInner ={
-
     background: "#fff8dc"
   }
  
@@ -22,8 +22,9 @@ const Home = () => {
       <div style={inner}>
         <Slider  />
         {/* <Insta /> */}
-        
-      </div>
+       </div>
+      
+       <Footer />
     </div>
 
   )
