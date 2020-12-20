@@ -21,7 +21,9 @@ const Home = () => {
       <Header />
       <div style={inner}>
         <Slider  />
-        {/* <Insta /> */}
+        {/* <Layout>
+        <Insta />
+        </Layout> */}
        </div>
       
        <Footer />
