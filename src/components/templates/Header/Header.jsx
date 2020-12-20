@@ -1,6 +1,6 @@
 import React from "react";
 import logo from "../../pages/img/logo.png"
-import {Nav} from "./HeaderStyles"
+import { HeaderNav} from "./HeaderStyles"
 
 
 const Header = () => {
@@ -15,10 +15,10 @@ const Header = () => {
   return (
 
     <>
-      <Nav>
+      <HeaderNav>
         <img src={logo} alt={logo} style={ Hederinner}/>
 
-      </Nav>
+      </HeaderNav>
 
     </>
 
