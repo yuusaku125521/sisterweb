@@ -23,7 +23,6 @@ const SimpleSlider = () => {
     height: "390px",
     width: "480px",
     color: "#fff",
-    background: "red"
   };
 
   const bodystyle = {

@@ -2,6 +2,7 @@ import React from 'react';
 import { bool } from 'prop-types';
 import { StyledMenu } from './Menu.styled';
 
+
 const Menu = ({ open, ...props }) => {
 
   const isHidden = open ? true : false;
@@ -9,18 +10,19 @@ const Menu = ({ open, ...props }) => {
 
   return (
     <StyledMenu open={open} aria-hidden={!isHidden} {...props}>
-      <a href="/" tabIndex={tabIndex}>
-        <span aria-hidden="true">💁🏻‍♂️</span>
-        About us
+      <a href="./home" tabIndex={tabIndex}>
+        Home
       </a>
-      <a href="/" tabIndex={tabIndex}>
-        <span aria-hidden="true">💸</span>
-        Pricing
+      <a href="./Profile" tabIndex={tabIndex}>
+        Profile
         </a>
       <a href="/" tabIndex={tabIndex}>
-        <span aria-hidden="true">📩</span>
+        Work
+        </a>
+      <a href="/" tabIndex={tabIndex}>
         Contact
         </a>
+        
     </StyledMenu>
   )
 }
