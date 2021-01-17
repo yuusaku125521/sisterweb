@@ -12,8 +12,8 @@ const Work = () => {
 
   const imginner2 = {
 
-    height: "600px",
-    width: "480px",
+    height: "550px",
+    width: "420px",
   }
 
   const bodyInner = {
@@ -23,8 +23,8 @@ const Work = () => {
 
 const imginner  = {
 
-  height: "500px",
-  width: "480px",
+  height: "470px",
+  width: "420px",
 }
 const warp = {
   margin: "0",
@@ -32,7 +32,7 @@ const warp = {
 }
 
   return (
-    <>
+    < div style={bodyInner}>
       <Header />
       <WorkBody>
 
@@ -40,8 +40,8 @@ const warp = {
        
           <h2>2020年5月</h2>
          
-         地元、大阪府池田市にて<br />お母さん、子育ての応援をするサイト{<a href="https://ikeda.kodomoto.org/" >kodomoto池田</a>}の<br/>
-         こけこっこ食堂様{<a href="https://www.instagram.com/cokecocco_shokudou/?hl=ja" >(cokecocco_shokudou)</a>}が取材される際<br/>店の看板メニューのイラストを制作
+        
+         こけこっこ食堂様{<a href="https://www.instagram.com/cokecocco_shokudou/?hl=ja" >(cokecocco_shokudou)</a>}の<br />看板メニューのイラストを制作
         <div>
           <img src={img10} alt={"img10"} style={imginner2} />
 
@@ -68,7 +68,7 @@ const warp = {
 
       <Footer />
 
-    </>
+    </div>
   )
 };
 

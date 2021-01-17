@@ -18,7 +18,7 @@ const Home = () => {
 
   const fontInner = {
     margin: "30px",
-    marginLeft: "93px",
+    marginLeft: "53px",
     fontFamily: 'Courier New'
   }
 

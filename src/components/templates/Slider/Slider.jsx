@@ -20,21 +20,22 @@ const SimpleSlider = () => {
   };
   const Sliderstyle = {
 
-    height: "500px",
-    width: "480px",
+
+    height: "470px",
+    width: "420px",
     color: "#fff",
   };
 
   const bodystyle = {
-    height: "500px",
-    width: "480px",
+
+    height: "470px",
+    width: "420px",
     color: "#fff",
   };
 
 
 
   return (
-
     <Slider {...settings} style={bodystyle}>
 
       <div>

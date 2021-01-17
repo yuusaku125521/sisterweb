@@ -8,16 +8,22 @@ const Profile = () => {
                 margin: "0",
                 fontFamily: 'Courier New'
         }
+        const Pinner2 = {
+                fontFamily: 'Courier New'
+        }
+        const bodyInner = {
+                background: "#fff8dc"
+        }
         return (
 
 
-                <>
+                < div style={bodyInner}>
                         <Header />
                         <ProfileBody>
                                 <div >
                                         <h1 style={Pinner}>Profile</h1>
 
-                                        <h2 >tinako <br />ちなこ</h2>
+                                        <h2 style={Pinner2}>tinako <br />ちなこ</h2>
                                         <p>1998年生まれ。　大阪府在住。<br />
         2019年飲食店のフライヤーのイラストを担当し、<br />
           これを機に2020年から本格的にイラストレーターとして<br />活動をスタートしました。<br />
@@ -28,7 +34,7 @@ const Profile = () => {
 
                         </ProfileBody>
                         < Footer />
-                </>
+                </ div>
 
         )
 }

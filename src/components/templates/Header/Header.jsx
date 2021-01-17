@@ -6,7 +6,7 @@ const Header = () => {
 
   const Hederinner = {
 
-    
+    paddingLeft:"20px",
     fontSize: "37px",
     fontFamily: 'Courier New'
   }
