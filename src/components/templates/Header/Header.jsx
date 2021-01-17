@@ -1,22 +1,22 @@
 import React from "react";
-import logo from "../../pages/img/logo.png"
-import { HeaderNav} from "./HeaderStyles"
+import { HeaderNav } from "./HeaderStyles"
 
 
 const Header = () => {
 
   const Hederinner = {
-    height: "80px",
-    width: "80%",
-    margin: "0 auto",
-    maxWidth: "500px",
+
+    
+    fontSize: "37px",
+    fontFamily: 'Courier New'
   }
 
   return (
 
     <>
       <HeaderNav>
-        <img src={logo} alt={logo} style={ Hederinner}/>
+        <h1 style={Hederinner}>tinako</h1>
+
 
       </HeaderNav>
 

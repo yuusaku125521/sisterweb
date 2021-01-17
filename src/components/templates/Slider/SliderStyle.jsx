@@ -1,13 +1,26 @@
 import styled from "styled-components";
 import media from 'styled-media-query';
 
-export const ProfileBody = styled.div`
-text-align: center;
-  fontFamily: 'Courier New'
-  background-color: #fff8dc
+
+export const SliderStyle = styled.div`
+
+    height: "490px",
+    width: "480px",
+    color: "#fff",
+     ${media.lessThan("medium")`
+    /* screen width is less than 768px (medium) */
+  `}
+
+  ${media.between("medium", "large")`
+    /* screen width is between 768px (medium) and 1170px (large) */
+  `}
+
+  ${media.greaterThan("large")`
+    /* screen width is greater than 1170px (large) */
+  `}
   ${media.lessThan("medium")`
     /* screen width is less than 768px (medium) */
-background-color: #fff8dc
+    background-color: #fff8dc
   `}
 
   ${media.between("medium", "large")`
@@ -21,42 +34,34 @@ background-color: #fff8dc
   `}
 `;
 
-
-export const ProfileTitle = styled.h1`
-/
- font-size : 50px;
-fontFamily: 'Courier New'
- ${media.lessThan("medium")`
+export const BodyStyle = styled.div`
+    height: "450px",
+    width: "480px",
+    color: "#fff",
+    background: "#ffed3c"
+     ${media.lessThan("medium")`
     /* screen width is less than 768px (medium) */
-   background-color: #fff8dc
   `}
 
   ${media.between("medium", "large")`
     /* screen width is between 768px (medium) and 1170px (large) */
-    background-color: #fff8dc
   `}
 
   ${media.greaterThan("large")`
     /* screen width is greater than 1170px (large) */
-    background-color: #fff8dc
   `}
-`
-
-export const Mainimg = styled.div`
-// padding-left: 780px;
 ${media.lessThan("medium")`
     /* screen width is less than 768px (medium) */
     background-color: #fff8dc
   `}
 
-  ${media.between("medium", "large")`
+${media.between("medium", "large")`
     /* screen width is between 768px (medium) and 1170px (large) */
    background-color: #fff8dc
   `}
 
-  ${media.greaterThan("large")`
+${media.greaterThan("large")`
     /* screen width is greater than 1170px (large) */
 background-color: #fff8dc
   `}
-`
-
+  `;

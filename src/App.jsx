@@ -1,6 +1,8 @@
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 import Base from "./components/pages/Base";
 import Home from "./components/pages/Home";
+import Work from "./components/pages/Work";
+import Contact from "./components/pages/Contact";
 import Profile from './components/pages/Profile';
 import { ThemeProvider } from 'styled-components';
 import { GlobalStyles } from '../src/global';
@@ -23,6 +25,8 @@ function App() {
             <Route exact path="/" component={Base} />
             <Route exact path="/home" component={Home} />
             <Route exact path="/profile" component={Profile} />
+            <Route exact path="/work" component={Work} />
+            <Route exact path="/contact" component={Contact} />
           </Switch>
         </Router>
         <div>
