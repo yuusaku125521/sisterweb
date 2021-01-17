@@ -20,16 +20,15 @@ const SimpleSlider = () => {
   };
   const Sliderstyle = {
 
-    height: "390px",
+    height: "500px",
     width: "480px",
     color: "#fff",
   };
 
   const bodystyle = {
-    height: "390px",
+    height: "500px",
     width: "480px",
     color: "#fff",
-    background: "#ffed3c"
   };
 
 
