@@ -5,14 +5,15 @@ import Footer from "../templates/Footer/Footer"
 
 const Profile = () => {
         const Pinner = {
-                margin: "0",
-                fontFamily: 'Courier New'
+                margin: "20px",
+                fontFamily: 'Courier New',
         }
         const Pinner2 = {
-                fontFamily: 'Courier New'
+                fontFamily: 'Courier New',
+                margin:"20px",
         }
         const bodyInner = {
-                background: "#fff8dc"
+                background: "#fff8dc",
         }
         return (
 
