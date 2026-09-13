@@ -1,0 +1,474 @@
+"""
+JARVIS風AIアシスタント - 会話エンジン(最小構成)
+
+まずはテキストベースでClaude APIと会話できる土台を作る。
+後の工程で VOICEVOX(音声出力)や音声認識(音声入力)を追加していく。
+"""
+
+import os
+import sys
+from anthropic import Anthropic
+
+import voicevox
+import speech_input
+import tools
+
+# --- 設定 ---------------------------------------------------------------
+
+MODEL = "claude-sonnet-4-6"  # 使用するClaudeモデル
+MAX_TOKENS = 1024
+
+# JARVISらしい人格・口調をシステムプロンプトで定義する
+SYSTEM_PROMPT = """\
+あなたは映画「アイアンマン」に登場するAIアシスタント「JARVIS」のような執事型AIです。
+以下の特徴を守って応答してください。
+
+- 常に丁寧で落ち着いた口調(「〜でございます」「かしこまりました」等)
+- 知的で簡潔、余計な前置きをしない
+- ユーザーを「マスター」または「ご主人様」と呼ぶ(ユーザーが別の呼び方を指定したらそれに従う)
+- 必要に応じて気の利いた一言や、状況への軽い気配りを添える
+- 日本語で応答する
+"""
+
+
+# --- 会話履歴の管理 -------------------------------------------------------
+
+class ConversationHistory:
+    """Claude APIに渡す会話履歴を保持するクラス"""
+
+    def __init__(self):
+        self.messages = []
+
+    def add_user_message(self, text: str):
+        self.messages.append({"role": "user", "content": text})
+
+    def add_assistant_content(self, content):
+        """Claudeからの応答(テキスト+tool_useブロックを含む場合あり)をそのまま保存"""
+        self.messages.append({"role": "assistant", "content": content})
+
+    def add_tool_result(self, tool_use_id: str, result_text: str):
+        """ツール実行結果をuserロールのtool_resultとして追加する"""
+        self.messages.append(
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "tool_result",
+                        "tool_use_id": tool_use_id,
+                        "content": result_text,
+                    }
+                ],
+            }
+        )
+
+    def as_list(self):
+        return self.messages
+
+
+# --- Claude API呼び出し(Tool Use対応) --------------------------------------
+
+def call_claude(client: Anthropic, history: ConversationHistory) -> str:
+    """
+    会話履歴を渡してClaudeの応答テキストを取得する。
+    Claudeがツール(タイマー等)を呼び出したい場合は、実際に実行して結果を返し、
+    最終的なテキスト応答が得られるまでやり取りを繰り返す。
+    """
+    while True:
+        response = client.messages.create(
+            model=MODEL,
+            max_tokens=MAX_TOKENS,
+            system=SYSTEM_PROMPT,
+            tools=tools.TOOLS,
+            messages=history.as_list(),
+        )
+
+        # 応答の生content(テキスト+tool_useブロック)を会話履歴に保存
+        history.add_assistant_content(response.content)
+
+        if response.stop_reason != "tool_use":
+            # 通常応答。テキスト部分だけを結合して返す
+            return "".join(
+                block.text for block in response.content if block.type == "text"
+            )
+
+        # tool_useブロックを見つけて、実際にツールを実行する
+        for block in response.content:
+            if block.type == "tool_use":
+                print(f"[ツール実行] {block.name}({block.input})")
+                result_text = tools.execute_tool(block.name, block.input)
+                history.add_tool_result(block.id, result_text)
+        # ツール実行結果を踏まえて、もう一度Claudeに問い合わせる(ループ継続)
+
+
+# --- メインループ ---------------------------------------------------------
+
+def main():
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        print("エラー: 環境変数 ANTHROPIC_API_KEY が設定されていません。")
+        print("例: export ANTHROPIC_API_KEY='sk-ant-...'")
+        sys.exit(1)
+
+    client = Anthropic(api_key=api_key)
+    history = ConversationHistory()
+
+    # 環境変数 JARVIS_VOICE_INPUT=1 で音声入力モードに切り替え
+    voice_mode = os.environ.get("JARVIS_VOICE_INPUT") == "1"
+
+    print("JARVIS起動しました。終了するには 'exit' または 'quit' と入力してください。")
+    if voice_mode:
+        print("(音声入力モードです。マイクから話しかけてください)")
+    if not voicevox.is_voicevox_running():
+        print("(注意: VOICEVOXアプリが起動していないようです。音声再生は無効になります)")
+    print()
+
+    while True:
+        try:
+            if voice_mode:
+                user_input = speech_input.listen()
+                if user_input == speech_input.QUIT_SIGNAL:
+                    print("JARVIS: 失礼いたします。")
+                    break
+                user_input = user_input.strip()
+                if user_input:
+                    print(f"あなた: {user_input}")
+                else:
+                    print("(音声が検出されなかったため、もう一度お試しください)")
+            else:
+                user_input = input("あなた: ").strip()
+        except (EOFError, KeyboardInterrupt):
+            print("\nJARVIS: 失礼いたします。")
+            break
+
+        if not user_input:
+            continue
+        if user_input.lower() in ("exit", "quit", "終了"):
+            print("JARVIS: 失礼いたします。")
+            break
+
+        history.add_user_message(user_input)
+
+        try:
+            reply = call_claude(client, history)
+        except Exception as e:
+            print(f"JARVIS: 申し訳ございません、エラーが発生いたしました。({e})")
+            continue
+
+        print(f"JARVIS: {reply}\n")
+        voicevox.speak(reply)
+
+
+if __name__ == "__main__":
+    main()
+
+# JARVIS風AIアシスタント(開発中)
+
+映画『アイアンマン』のJARVISのような、日本語で会話できるAIアシスタントを目指すプロジェクト。
+
+## 現在のバージョンでできること
+
+- ターミナル上でClaude APIとテキストチャットができる
+- JARVISらしい丁寧な執事口調で応答する(システムプロンプトで定義)
+- 会話履歴を保持し、文脈を踏まえた応答ができる
+
+## セットアップ
+
+### 1. ライブラリのインストール
+
+```bash
+pip install -r requirements.txt
+```
+
+### 2. APIキーの設定
+
+Anthropic ConsoleでAPIキーを取得し、環境変数に設定する。
+
+```bash
+export ANTHROPIC_API_KEY="sk-ant-xxxxxxxx"
+```
+
+(Windowsの場合は `set ANTHROPIC_API_KEY=sk-ant-xxxxxxxx`)
+
+### 3. 起動
+
+```bash
+python main.py
+```
+
+`あなた: ` と表示されたら話しかけてください。終了する場合は `exit` と入力。
+
+## 今後のロードマップ
+
+1. **[完了]** テキストベースの会話エンジン(Claude API連携)
+2. VOICEVOXと連携し、応答を音声で読み上げる
+3. 音声認識(Whisper等)を追加し、マイクで話しかけられるようにする
+4. Tool Use機能を使い、「天気を教えて」「タイマーをセットして」等の実際の操作に対応
+5. 常時起動PC上でバックグラウンド常駐させる
+6. スマホからPCへリモート接続できる仕組みを構築(Wi-Fi経由)
+
+## ファイル構成
+
+```
+jarvis/
+├── main.py          # 会話エンジンの本体
+├── requirements.txt # 必要なライブラリ
+└── README.md        # このファイル
+```
+
+anthropic>=0.40.0
+requests>=2.31.0
+faster-whisper>=1.0.0
+sounddevice>=0.4.6
+soundfile>=0.12.1
+numpy>=1.24.0
+
+"""
+音声入力モジュール(音声認識)
+
+Enterキーを押すと録音開始、もう一度Enterキーを押すと録音終了し、
+faster-whisperでテキストに変換する(プッシュトゥトーク方式)。
+
+初回実行時はWhisperモデルのダウンロードが発生する(数百MB程度、ネット接続が必要)。
+一度ダウンロードすればその後はローカルで動作する。
+"""
+
+import queue
+import tempfile
+
+import numpy as np
+import sounddevice as sd
+import soundfile as sf
+from faster_whisper import WhisperModel
+
+# --- 設定 ---------------------------------------------------------------
+
+SAMPLE_RATE = 16000  # Whisperが想定するサンプリングレート
+# モデルサイズ: tiny / base / small / medium / large から選択
+# 小さいほど高速・低精度、大きいほど高精度・低速。日本語ならsmall以上推奨。
+MODEL_SIZE = "small"
+
+# WhisperModelの初期化は重いので、モジュール読み込み時に一度だけ行う
+_model = WhisperModel(MODEL_SIZE, device="cpu", compute_type="int8")
+
+
+# --- 録音 ---------------------------------------------------------------
+
+def record_until_enter() -> np.ndarray:
+    """Enterキーが押されるまでマイクから録音を続ける"""
+    q = queue.Queue()
+
+    def callback(indata, frames, time, status):
+        q.put(indata.copy())
+
+    print("録音中... (話し終えたらEnterキーを押してください)")
+    frames = []
+    with sd.InputStream(
+        samplerate=SAMPLE_RATE, channels=1, dtype="float32", callback=callback
+    ):
+        input()  # ここでEnter待ち
+
+    while not q.empty():
+        frames.append(q.get())
+
+    if not frames:
+        return np.zeros((0,), dtype=np.float32)
+    return np.concatenate(frames, axis=0).flatten()
+
+
+# --- 文字起こし ------------------------------------------------------------
+
+# この値未満の音量(RMS)しか無い場合は「無音」とみなし、文字起こしをスキップする
+# (Whisperは無音に対して「ご視聴ありがとうございました」等を誤生成する癖があるため)
+SILENCE_THRESHOLD = 0.005
+
+
+def transcribe(audio: np.ndarray) -> str:
+    """録音した音声データをテキストに変換する"""
+    if audio.size == 0:
+        return ""
+
+    # 音量(RMS)をチェックし、ほぼ無音なら誤生成を避けるため文字起こしをスキップ
+    rms = float(np.sqrt(np.mean(np.square(audio))))
+    if rms < SILENCE_THRESHOLD:
+        return ""
+
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
+        sf.write(f.name, audio, SAMPLE_RATE)
+        segments, _ = _model.transcribe(f.name, language="ja")
+        text = "".join(segment.text for segment in segments)
+
+    return text.strip()
+
+
+# main.py側の終了判定と合わせる特別な合図(録音前にこの文字を入力すると終了できる)
+QUIT_SIGNAL = "__QUIT__"
+
+
+def listen() -> str:
+    """録音→文字起こしまでをまとめて行う入口関数"""
+    pre_input = input(
+        "Enterキーを押すと録音を開始します(qと入力してEnterで終了)..."
+    ).strip().lower()
+    if pre_input in ("q", "exit", "quit", "終了"):
+        return QUIT_SIGNAL
+
+    audio = record_until_enter()
+    print("文字起こし中...")
+    return transcribe(audio)
+
+"""
+JARVISが使える「ツール」を定義するモジュール。
+
+Claude APIのTool Use機能と連携し、ユーザーの発言に応じて
+実際の処理(今回はタイマー機能)を実行する。
+"""
+
+import threading
+import time
+
+import voicevox
+
+# --- Claude APIに渡すツール定義 --------------------------------------------
+# ここで定義した内容をもとに、Claudeが「このツールを呼びたい」と判断する。
+
+TOOLS = [
+    {
+        "name": "set_timer",
+        "description": (
+            "指定した秒数後に通知するタイマーをセットする。"
+            "「3分タイマー」「5分後に教えて」等のリクエストに使う。"
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "seconds": {
+                    "type": "integer",
+                    "description": "タイマーの秒数(例: 3分なら180)",
+                },
+                "label": {
+                    "type": "string",
+                    "description": "何のタイマーか(例: 'カップ麺', '休憩'など)。指定がなければ空文字でよい。",
+                },
+            },
+            "required": ["seconds"],
+        },
+    }
+]
+
+
+# --- タイマーの実行本体 -----------------------------------------------------
+
+def _timer_thread(seconds: int, label: str):
+    time.sleep(seconds)
+    if label:
+        message = f"マスター、{label}のタイマーが終了いたしました。"
+    else:
+        message = "マスター、タイマーが終了いたしました。"
+    print(f"\n[タイマー通知] {message}")
+    voicevox.speak(message)
+
+
+def set_timer(seconds: int, label: str = "") -> str:
+    """タイマーをバックグラウンドで開始し、Claudeに返す結果テキストを返す"""
+    thread = threading.Thread(target=_timer_thread, args=(seconds, label), daemon=True)
+    thread.start()
+    return f"{seconds}秒のタイマーを開始しました。"
+
+
+# --- ツール名 → 実行関数 の対応表 -------------------------------------------
+
+TOOL_FUNCTIONS = {
+    "set_timer": lambda tool_input: set_timer(
+        seconds=tool_input["seconds"], label=tool_input.get("label", "")
+    ),
+}
+
+
+def execute_tool(name: str, tool_input: dict) -> str:
+    """ツール名と引数を受け取り、対応する関数を実行して結果を返す"""
+    func = TOOL_FUNCTIONS.get(name)
+    if func is None:
+        return f"エラー: 未知のツール '{name}' が呼び出されました。"
+    return func(tool_input)
+
+"""
+VOICEVOX連携モジュール
+
+前提: VOICEVOXアプリ(公式サイトからダウンロード)を起動しておくこと。
+起動すると、ローカルに音声合成用のAPIサーバー(デフォルト: http://127.0.0.1:50021)が立ち上がる。
+このモジュールはそのAPIにテキストを送り、音声を生成して再生する。
+"""
+
+import io
+import platform
+import subprocess
+import tempfile
+
+import requests
+
+VOICEVOX_URL = "http://127.0.0.1:50021"
+
+# スピーカーID(声の種類)。VOICEVOXアプリで確認・変更可能。
+# 代表例: 2 = 四国めたん(ノーマル), 3 = ずんだもん(ノーマル), 11 = 玄野武宏(ノーマル)など
+# JARVIS風の落ち着いた声にしたい場合は、アプリ内で低めのトーンの男性ボイスを探して番号を変更する。
+SPEAKER_ID = 11
+
+
+def is_voicevox_running() -> bool:
+    """VOICEVOXアプリ(APIサーバー)が起動しているか確認する"""
+    try:
+        res = requests.get(f"{VOICEVOX_URL}/version", timeout=2)
+        return res.status_code == 200
+    except requests.exceptions.RequestException:
+        return False
+
+
+def synthesize(text: str, speaker: int = SPEAKER_ID) -> bytes:
+    """テキストをVOICEVOXで音声(wavバイナリ)に変換する"""
+    # 1. 発音・イントネーション情報(audio_query)を取得
+    query_res = requests.post(
+        f"{VOICEVOX_URL}/audio_query",
+        params={"text": text, "speaker": speaker},
+        timeout=10,
+    )
+    query_res.raise_for_status()
+    audio_query = query_res.json()
+
+    # 2. audio_queryをもとに音声を合成
+    synth_res = requests.post(
+        f"{VOICEVOX_URL}/synthesis",
+        params={"speaker": speaker},
+        json=audio_query,
+        timeout=30,
+    )
+    synth_res.raise_for_status()
+    return synth_res.content
+
+
+def play_wav_bytes(wav_bytes: bytes):
+    """wavバイナリを一時ファイルに保存し、OS標準の方法で再生する"""
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
+        f.write(wav_bytes)
+        path = f.name
+
+    system = platform.system()
+    if system == "Darwin":  # macOS
+        subprocess.run(["afplay", path], check=False)
+    elif system == "Windows":
+        import winsound
+
+        winsound.PlaySound(path, winsound.SND_FILENAME)
+    else:  # Linux
+        subprocess.run(["aplay", path], check=False)
+
+
+def speak(text: str, speaker: int = SPEAKER_ID):
+    """テキストを音声合成して再生する(呼び出し用の入口関数)"""
+    if not is_voicevox_running():
+        print("[警告] VOICEVOXが起動していないため、音声再生をスキップしました。")
+        return
+    try:
+        wav_bytes = synthesize(text, speaker)
+        play_wav_bytes(wav_bytes)
+    except requests.exceptions.RequestException as e:
+        print(f"[警告] VOICEVOXとの通信に失敗しました: {e}")
